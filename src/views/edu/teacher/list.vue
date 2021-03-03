@@ -9,7 +9,7 @@
 import teacher from '@/api/edu/teacher'
 
 export default {
-    //写核心代码的位置测试
+    //写核心代码的位置测
 
 
 }
