@@ -63,6 +63,8 @@ export default {
                         type: 'success',
                         message: '添加课程分类成功'
                     })
+                    //路由跳转
+                    this.$router.push({path:'/subject/list'})
                 } 
                 
         },
