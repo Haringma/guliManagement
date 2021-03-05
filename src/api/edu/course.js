@@ -10,6 +10,13 @@ export default{
             method: 'post',
             data:courseInfo
           })
+    },
+    //2.查询讲师
+    getListTeacher(){
+        return request({
+            url: `/eduService/teacher/findAll`,
+            method: 'get'
+          })
     }
 
 }
