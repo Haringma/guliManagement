@@ -17,8 +17,27 @@
     </el-form-item>
 
     <!-- 所属分类 TODO -->
+    <el-form-item label="课程分类">
+      <el-select
+          v-model="courseInfo.subjectParentId"
+          placeholder="一级分类" @change="subjectLevelOneChanged">
+          <el-option
+          v-for="subject in subjectOneList"
+          :key="subject.id"
+          :label="subject.title"
+          :value="subject.id"/>
+      </el-select>
+      <el-select
+          v-model="courseInfo.subjectId"
+          placeholder="二级分类">
+          <el-option
+          v-for="subject in subjectTwoList"
+          :key="subject.id"
+          :label="subject.title"
+          :value="subject.id"/>
+      </el-select>
+    </el-form-item>
 
-    <!-- 课程讲师 TODO -->
     <!-- 课程讲师 -->
     <el-form-item label="课程讲师">
     <el-select
@@ -36,12 +55,24 @@
         <el-input-number :min="0" v-model="courseInfo.lessonNum" controls-position="right" placeholder="请填写课程的总课时数"/>
     </el-form-item>
 
-    <!-- 课程简介 TODO -->
+    <!-- 课程简介-->
     <el-form-item label="课程简介">
-        <el-input v-model="courseInfo.description" placeholder=" "/>
+        <tinymce :height="300" v-model="courseInfo.description"/>
     </el-form-item>
 
-    <!-- 课程封面 TODO -->
+    <!-- 课程封面-->
+    <el-form-item label="课程封面">
+
+        <el-upload
+          :show-file-list="false"
+          :on-success="handleAvatarSuccess"
+          :before-upload="beforeAvatarUpload"
+          :action="BASE_API+'/eduOss/fileOss'"
+          class="avatar-uploader">
+          <img :src="courseInfo.cover">
+        </el-upload>
+
+    </el-form-item>
 
     <el-form-item label="课程价格">
         <el-input-number :min="0" v-model="courseInfo.price" controls-position="right" placeholder="免费课程请设置为0元"/> 元
@@ -55,30 +86,74 @@
 </template>
 <script>
 import course from '@/api/edu/course'
+import subject from '@/api/edu/subject'
+import Tinymce from '@/components/Tinymce'
 export default {
+  components: { Tinymce },
   data() {
     return {
       saveBtnDisabled: false, // 保存按钮是否禁用
       courseInfo:{
         title: '',
-        subjectId: '',
+        subjectId: '',//二级分类id
+        subjectParentId:'',//一级分类id
         teacherId: '',
         lessonNum: 0,
         description: '',
-        cover: '',
+        cover: '/static/01.jpg',
         price: 0
       },
-      teacherList:[]
+      BASE_API:process.env.BASE_API,
+      teacherList:[],
+      subjectOneList:[],
+      subjectTwoList:[]
     }
   },
 
   created() {
     console.log('info created')
     this.getTeacherList()
+    this.getOneSubject()
   },
 
   methods: {
+    
+    handleAvatarSuccess(res, file) {
+      console.log(res)// 上传响应
+      console.log(URL.createObjectURL(file.raw))// base64编码
+      this.courseInfo.cover = res.data.url
+    },
 
+    beforeAvatarUpload(file) {
+      const isJPG = file.type === 'image/jpeg'
+      const isLt2M = file.size / 1024 / 1024 < 2
+
+      if (!isJPG) {
+        this.$message.error('上传头像图片只能是 JPG 格式!')
+      }
+      if (!isLt2M) {
+        this.$message.error('上传头像图片大小不能超过 2MB!')
+      }
+      return isJPG && isLt2M
+    },
+
+    //当点击某一个一级分类，得到一级分类下面的二级分类
+    subjectLevelOneChanged(value){
+      for (let i = 0; i < this.subjectOneList.length; i++) {
+          if (this.subjectOneList[i].id === value) {
+              this.subjectTwoList = this.subjectOneList[i].children
+              this.courseInfo.subjectId = ''
+          }
+      }
+    },
+
+    //查询所有的一级分类
+    getOneSubject(){
+      subject.getsubjectList()
+            .then(response =>{
+              this.subjectOneList = response.data.list
+            })
+    },
     saveOrUpdate() {
       course.addCourseInfo(this.courseInfo)
             .then(response=>{
@@ -100,3 +175,8 @@ export default {
   }
 }
 </script>
+<style scoped>
+.tinymce-container {
+  line-height: 29px;
+}
+</style>
